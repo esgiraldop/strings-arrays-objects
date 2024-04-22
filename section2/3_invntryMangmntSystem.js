@@ -337,23 +337,28 @@ const showSortedProducts = (products) =>{
     }
 }
 
+const getCurseWordsProds = (products, curseWordsList) => {
+    let blacklistedProducts = []
+    // Scanning the database
+    products.forEach(element =>{
+        for(let word of curseWordsList){
+            if(element.description.includes(word)){
+                element.description = element.description.replace(word,"*".repeat(word.length))
+                //TODO: If there is a description with two curse words, the product will appear twice in "blacklistedProducts". Action: Correct this
+                blacklistedProducts.push(element)
+            }
+        }
+    })
+    return blacklistedProducts
+}
+
 const getRudeDescriptions = (products, curseWordsList) =>{
     // Function for option 11
     if(products.length === 0){
         alert("There are no products in the database")
     }else{
         if(confirm("Do you want to scan the list of products to identify the products with curse words in the description?")){
-            let blacklistedProducts = []
-            // Scanning the database
-            products.forEach(element =>{
-                for(let word of curseWordsList){
-                    if(element.description.includes(word)){
-                        element.description = element.description.replace(word,"*".repeat(word.length))
-                        //TODO: If there is a description with two curse words, the product will appear twice in "blacklistedProducts". Action: Correct this
-                        blacklistedProducts.push(element)
-                    }
-                }
-            })
+            let blacklistedProducts = getCurseWordsProds(products, curseWordsList)
             if(blacklistedProducts.length === 0){
                 alert("No curse words were found in the descriptions of the products")
                 return
@@ -373,15 +378,48 @@ const getCheapestProd = (products) =>{
     return products.reduce((a,b) => a.price<b.price ? a:b)
 }
 
-const generateReport = (products) =>{
+const getHighestQuantProd = (products) =>{
+    return products.reduce((a,b) => a.quantity>b.quantity ? a:b)
+}
+
+const getLowestQuantProd = (products) =>{
+    return products.reduce((a,b) => a.quantity<b.quantity ? a:b)
+}
+
+const generateReport = (products, curseWordsList) =>{
     // Function for option 12
-    alert(`There are ${products.length} products\n`+
-    `The value of all the inventory is ${getTotalValue(products)} dollars\n`+
-        `\n`+
-        `\n`+
-        `\n`+
-        `\n`+
-    )
+    if(products.length === 0){
+        alert("There are no products in the database")
+    }else {
+        let mep = getMostExpensiveProd(products)
+        let cp = getCheapestProd(products)
+        let hqp = getHighestQuantProd(products)
+        let lqp = getLowestQuantProd(products)
+        let blacklistedProducts = getCurseWordsProds(products, curseWordsList)
+        let blacklistedProductsStr
+        if(blacklistedProducts.length === 0){
+            blacklistedProductsStr = `There are not products with curse words`
+        }else{
+            blacklistedProductsStr = `The products in the database with cursing words (Censored version) are\n`+
+               getDbElemsAsString(blacklistedProducts)
+        }
+
+        alert(`There are ${products.length} products\n` +
+            `The value of all the inventory is ${getTotalValue(products)} dollars\n` +
+            `The most expensive product is "${mep.name}" with an unitary price of ${mep.price} dollars. There are ${mep.quantity} of these\n` +
+            `The cheapest product is "${cp.name}" with an unitary price of ${cp.price} dollars. There are ${cp.quantity} of these\n` +
+            `The product with the highest availability is "${hqp.name}" with ${hqp.quantity} items\n` +
+            `The product with the lowest availability is "${lqp.name}" with ${lqp.quantity} items\n` +
+            blacklistedProductsStr
+        )
+        /* test
+        * banana --> 1 100 "hola"
+        * Avocado --> 5 30 "bla palabra1 bla bla"
+        * Gold --> 100 2 "expensivepalabra5"
+        * mazamorra --> 2 60 "Hola
+        * "
+        * */
+    }
 }
 
 const menu = () => {
@@ -465,7 +503,7 @@ const menu = () => {
         }
         if(ans === '12'){
             // Generate report
-            generateReport(products)
+            generateReport(products, curseWordsList)
         }
     }
 
